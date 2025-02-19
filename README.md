@@ -1,6 +1,8 @@
 # ai_translation_demo
 AI Rethinking Translation Tool
 
+![image](https://github.com/user-attachments/assets/7260a2d3-51e9-4e2f-95ba-394df49602fe)
+
 # GitHub Repository Setup and Usage Guide
 
 This guide provides step-by-step instructions to set up and run the project from this GitHub repository on your local machine.
