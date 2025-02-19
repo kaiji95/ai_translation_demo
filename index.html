@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻译助手</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+        }
+        .loading {
+            position: relative;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .loading::after {
+            content: "处理中...";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .file-upload {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .file-upload:hover {
+            border-color: #4CAF50;
+        }
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>翻译助手</h1>
+        <div class="tabs">
+            <div class="tab active" data-tab="text">文本翻译</div>
+            <div class="tab" data-tab="pdf">PDF翻译</div>
+        </div>
+
+        <div class="tab-content active" id="text-content">
+            <form id="translationForm">
+                <div class="form-group">
+                    <label for="source_text">源文本：</label>
+                    <textarea id="source_text" name="source_text" rows="4" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="source_lang">源语言：</label>
+                    <select id="source_lang" name="source_lang" required>
+                        <option value="en">英语 (English)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="jp">日语 (Japanese)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="target_lang">目标语言：</label>
+                    <select id="target_lang" name="target_lang" required>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="en">英语 (English)</option>
+                        <option value="jp">日语 (Japanese)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="user_reflection">翻译建议（可选）：</label>
+                    <textarea id="user_reflection" name="user_reflection" rows="2"></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn">开始翻译</button>
+            </form>
+        </div>
+
+        <div class="tab-content" id="pdf-content">
+            <form id="pdfForm">
+                <div class="form-group">
+                    <div class="file-upload" id="dropZone">
+                        <input type="file" id="pdfFile" accept=".pdf" required>
+                        <p>点击或拖拽上传PDF文件</p>
+                        <div class="file-info"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdf_source_lang">源语言：</label>
+                    <select id="pdf_source_lang" name="pdf_source_lang" required>
+                        <option value="en">英语 (English)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="jp">日语 (Japanese)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdf_target_lang">目标语言：</label>
+                    <select id="pdf_target_lang" name="pdf_target_lang" required>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="en">英语 (English)</option>
+                        <option value="jp">日语 (Japanese)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdf_user_reflection">翻译建议（可选）：</label>
+                    <textarea id="pdf_user_reflection" name="pdf_user_reflection" rows="2"></textarea>
+                </div>
+
+                <button type="submit" id="pdfSubmitBtn">开始翻译PDF</button>
+            </form>
+        </div>
+
+        <div class="form-group">
+            <label for="result">翻译结果：</label>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 标签页切换
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = `${tab.dataset.tab}-content`;
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // 文本翻译表单处理
+        const form = document.getElementById('translationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '翻译中...';
+            form.classList.add('loading');
+            resultDiv.textContent = '正在处理翻译请求...';
+            
+            const sourceText = document.getElementById('source_text').value;
+            const sourceLang = document.getElementById('source_lang').value;
+            const targetLang = document.getElementById('target_lang').value;
+            const userReflection = document.getElementById('user_reflection').value;
+            
+            try {
+                const pythonCommand = `
+                    1. 调用 initial_translation 将 "${sourceText}" 从 ${sourceLang} 翻译成 ${targetLang}。
+                    2. 调用 reflection_translation 并传入用户建议 "${userReflection}", 生成相应建议。
+                    3. 调用 enhance_translation 并得到最终的翻译结果。
+                `;
+
+                const response = await fetch('http://localhost:5000/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        command: pythonCommand
+                    })
+                });
+
+                const data = await response.json();
+                resultDiv.textContent = data.result;
+            } catch (error) {
+                resultDiv.textContent = '翻译过程中发生错误：' + error.message;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '开始翻译';
+                form.classList.remove('loading');
+            }
+        });
+
+        // PDF上传和处理
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('pdfFile');
+        const fileInfo = document.querySelector('.file-info');
+        const pdfForm = document.getElementById('pdfForm');
+        const pdfSubmitBtn = document.getElementById('pdfSubmitBtn');
+
+        // 拖拽上传
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#4CAF50';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#ddd';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#ddd';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileInfo();
+            }
+        });
+
+        fileInput.addEventListener('change', updateFileInfo);
+
+        function updateFileInfo() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileInfo.textContent = `已选择: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+            } else {
+                fileInfo.textContent = '';
+            }
+        }
+
+        // PDF翻译表单提交
+        pdfForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请选择PDF文件');
+                return;
+            }
+
+            pdfSubmitBtn.disabled = true;
+            pdfSubmitBtn.textContent = '处理中...';
+            pdfForm.classList.add('loading');
+            resultDiv.textContent = '正在处理PDF文件...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('source_lang', document.getElementById('pdf_source_lang').value);
+            formData.append('target_lang', document.getElementById('pdf_target_lang').value);
+            formData.append('user_reflection', document.getElementById('pdf_user_reflection').value);
+
+            try {
+                const response = await fetch('http://localhost:5000/translate-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('PDF处理失败');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // 创建下载链接
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `translated_${file.name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                resultDiv.textContent = 'PDF翻译完成，已自动下载翻译后的文件。';
+            } catch (error) {
+                resultDiv.textContent = 'PDF处理过程中发生错误：' + error.message;
+            } finally {
+                pdfSubmitBtn.disabled = false;
+                pdfSubmitBtn.textContent = '开始翻译PDF';
+                pdfForm.classList.remove('loading');
+            }
+        });
+    </script>
+</body>
+</html>
